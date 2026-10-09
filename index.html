@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Киносвайп</title>
+<meta name="description" content="Свайпайте афишу кино: вправо — интересно, влево — нет, вверх — может быть. Делитесь подборкой в Telegram.">
+<meta name="theme-color" content="#050506">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Киносвайп — что посмотреть в кино">
+<meta property="og:description" content="Свайпайте афишу и соберите свой список фильмов на октябрь.">
+<meta property="og:image" content="posters/01.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Manrope:wght@400;600;700&display=swap">
+<style>
+/* Layout: one-screen dark app, stacked deck like the reference, actions pinned at bottom */
+:root{--bg:#050506;--surf:#141417;--line:#26262b;--fg:#f4f4f6;--mut:#9a9aa3;--yes:#c6f135;--maybe:#ffb23e;--no:#ff4d5e;--disp:'Unbounded',system-ui,sans-serif;--body:'Manrope',system-ui,sans-serif;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg) radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px) 0 0/12px 12px;color:var(--fg);font-family:var(--body);overflow:hidden}
+.app{height:100%;max-width:460px;margin:0 auto;display:flex;flex-direction:column;padding-inline:16px;box-sizing:border-box}
+header{display:flex;justify-content:space-between;align-items:center;padding-block:14px 10px}
+h1{font:800 26px/1 var(--disp);margin:0;letter-spacing:-.02em}
+.count{font:600 12px var(--disp);color:var(--mut);font-variant-numeric:tabular-nums}
+.deck{position:relative;flex:1;min-height:0;margin-top:22px}
+.card{position:absolute;inset:0;border-radius:26px;overflow:hidden;background:var(--surf);box-shadow:0 -6px 24px rgba(0,0,0,.6);touch-action:none;user-select:none;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .35s;will-change:transform;display:flex;flex-direction:column}
+.pst{position:relative;flex:1;min-height:0;overflow:hidden;background:#000}
+.pst .bg{position:absolute;inset:-20px;width:calc(100% + 40px);height:calc(100% + 40px);object-fit:cover;filter:blur(22px) brightness(.45);pointer-events:none}
+.pst .fg{position:relative;display:block;height:100%;width:100%;object-fit:contain;pointer-events:none}
+.info{flex:none;padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;background:var(--surf);max-height:44%;overflow:auto}
+.genre{font:600 11px var(--disp);text-transform:uppercase;letter-spacing:.08em;color:var(--yes)}
+.info h2{font:800 19px/1.15 var(--disp);margin:0;text-wrap:balance}
+.info p{margin:0;font-size:13.5px;line-height:1.45;color:#cfcfd6}
+.meta{font-size:12px;color:var(--mut)}
+.trl{position:absolute;right:12px;bottom:12px;display:flex;align-items:center;gap:8px;background:rgba(10,10,12,.7);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);color:var(--fg);font:700 13px var(--body);padding:10px 14px;border-radius:99px;cursor:pointer}
+.stamp{position:absolute;top:22px;font:800 20px var(--disp);padding:6px 12px;border:3px solid;border-radius:10px;opacity:0;text-transform:uppercase;z-index:2;background:rgba(0,0,0,.4)}
+.s-yes{left:18px;color:var(--yes);transform:rotate(-12deg)}.s-no{right:18px;color:var(--no);transform:rotate(12deg)}.s-may{left:50%;top:40%;translate:-50%;color:var(--maybe)}
+.bar{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:10px;padding-block:14px calc(14px + env(safe-area-inset-bottom,0px))}
+.bar button{border:0;border-radius:99px;height:56px;font:700 14px var(--body);cursor:pointer;color:#111}
+.b-no{background:#2a1014;color:var(--no)!important;border:1px solid #4a1a20!important}
+.b-may{background:var(--maybe)}
+.b-yes{background:var(--yes);background-image:radial-gradient(rgba(0,0,0,.18) 1px,transparent 1.3px);background-size:5px 5px}
+button:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
+.hint{text-align:center;font-size:12px;color:var(--mut);margin-top:-4px}
+/* results */
+.res{flex:1;overflow:auto;padding-bottom:20px}
+#shot{background:var(--bg);padding:18px;border-radius:20px;display:flex;flex-direction:column;gap:14px}
+.grp h3{font:800 13px var(--disp);text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px;display:flex;justify-content:space-between}
+.row{display:flex;gap:12px;align-items:center;padding:8px;border-radius:16px;margin-bottom:6px}
+.row img{width:52px;height:74px;object-fit:cover;border-radius:10px;flex:none}
+.row div{min-width:0}.row b{display:block;font-size:15px}.row span{font-size:12px;color:#333}
+.g-yes .row{background:var(--yes);color:#111}.g-may .row{background:var(--maybe);color:#111}
+.g-no .row{background:var(--surf)}.g-no .row span{color:var(--mut)}.g-no img{filter:grayscale(1);opacity:.5}
+.brand{font:600 10px var(--disp);color:var(--mut);text-align:center;letter-spacing:.1em}
+.acts{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.acts button,.acts a{height:54px;border-radius:99px;border:0;font:700 15px var(--body);display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;cursor:pointer}
+.tg{background:#2aabee;color:#fff}.again{background:var(--surf);color:var(--fg)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px;z-index:9}
+.mbox{width:100%;max-width:520px;background:var(--surf);border-radius:22px;overflow:hidden}
+.mbox .vid{aspect-ratio:16/9;max-width:100%;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:16px;box-sizing:border-box}
+.mbox iframe{width:100%;aspect-ratio:16/9;border:0;display:block}
+.mbox .mf{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;gap:10px}
+.mbox a{color:var(--yes);font-weight:700}
+.x{background:var(--line);color:var(--fg);border:0;border-radius:99px;padding:10px 16px;font:700 13px var(--body);cursor:pointer}
+#preview img{width:100%;border-radius:14px}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+/* additions */
+[hidden]{display:none!important}
+body{margin:0}
+.bar{grid-template-columns:1fr 1.25fr 1.25fr}
+.bar button{white-space:nowrap;padding-inline:8px;font-size:13.5px}
+.app{height:100dvh}
+header .tools{display:flex;align-items:center;gap:10px}
+.undo{background:var(--surf);color:var(--fg);border:1px solid var(--line);border-radius:99px;width:36px;height:36px;font:700 16px var(--body);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.undo:disabled{opacity:.3;cursor:default}
+.prog{height:3px;background:var(--line);border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--yes);transition:width .3s}
+.card .trl{z-index:3}
+.bar button:active{transform:scale(.96)}
+@media (max-height:640px){.hint{display:none}.deck{margin-top:14px}}
+@media (hover:hover){.bar button:hover{filter:brightness(1.1)}}
+noscript{display:block;padding:24px;text-align:center}
+</style>
+</head>
+<body>
+<div class="app" id="app"><noscript>Для работы Киносвайпа включите JavaScript.</noscript></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" hidden><div class="mbox" id="mbox"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<script>
+const F=[{"t": "Тайный дневник Верити", "g": "детектив • триллер", "c": "Энн Хэтэуэй, Дакота Джонсон, Джош Хартнетт · реж. Майкл Шоуолтер", "d": "Начинающая писательница соглашается дописать книжную серию за известную авторшу, которая после аварии прикована к постели. В её доме она находит рукопись-исповедь, после которой уже не понятно, кому здесь можно верить. По бестселлеру Колин Гувер.", "dt": "с 8 октября", "age": "18+", "hi": "https://www.afisha.uz/uploads/media/2026/09/47bf3ba93678b6edf07872c7a532c450_lf.webp", "lo": "https://cdn.kino.kz/movies/Verity/p344x489.webp", "emb": "posters/01.jpg", "yt": "xdPMKhjMSFs"}, {"t": "Сумерки. Сага. Новолуние", "g": "фэнтези • драма", "c": "Роберт Паттинсон, Кристен Стюарт, Тейлор Лотнер · реж. Крис Вайц", "d": "Эдвард уходит из жизни Беллы, чтобы её защитить. Опору она находит в Джейкобе, а у него своя волчья тайна. Повторный прокат второй части саги.", "dt": "с 8 октября", "age": "18+", "hi": "https://cdn.kino.kz/movies/The_Twilight_Saga_New_Moon/p344x489.webp", "lo": "https://cdn.kino.kz/movies/The_Twilight_Saga_New_Moon/p344x489.webp", "emb": "posters/02.jpg", "yt": "s3svt-PGzL8"}, {"t": "Сердце зверя", "g": "боевик • приключения", "c": "Брэд Питт, Дж. К. Симмонс, Анна Ламбе · реж. Дэвид Эйр", "d": "После авиакатастрофы спецназовец Джеймс Белмонт и его служебный пёс Один оказываются одни в дикой Аляске. Выжить им предстоит среди хищников, холода и собственных демонов.", "dt": "с 24 сентября", "age": "16+", "hi": "https://www.afisha.uz/uploads/media/2026/09/809e3a890a85c4c0f39005cf03d938ff_lf.webp", "lo": "https://cdn.kino.kz/movies/Heart_of_the_Beast/p344x489.webp", "emb": "posters/03.jpg", "yt": "EiAk7EtHnUQ"}, {"t": "Обитель зла", "g": "ужасы", "c": "реж. Зак Креггер («Орудия», «Варвар»)", "d": "Новое прочтение культовой игровой франшизы от автора самых обсуждаемых хорроров последних лет. Критики уже называют его лучшим фильмом о зомби за много лет. Есть сеансы в IMAX.", "dt": "с 24 сентября", "age": "18+", "hi": "https://www.afisha.uz/uploads/media/2026/09/9dcfb54fb10a6714d0ac795946445b8a_lf.webp", "lo": "https://cdn.kino.kz/movies/Resident_Evil_/p344x489.webp", "emb": "posters/04.jpg", "yt": "hCAptRVwaXw"}, {"t": "Диггер", "g": "драма • комедия", "c": "Том Круз, Сандра Хюллер, Джесси Племонс · реж. Алехандро Г. Иньярриту", "d": "Нефтяной магнат Диггер Роквелл устраивает глобальную экологическую катастрофу и тут же объявляет себя тем, кто спасёт человечество. Чёрная комедия от режиссёра «Бёрдмэна».", "dt": "с 1 октября", "age": "18+", "hi": "https://www.afisha.uz/uploads/media/2026/09/66a16445edab19682d6763277c9881db_lf.webp", "lo": "https://cdn.kino.kz/movies/Digger/p344x489.webp", "emb": "posters/05.jpg", "yt": "sLEd1paT9qc"}, {"t": "Мстители: Финал. Расширенная версия", "g": "боевик • фантастика", "c": "Роберт Дауни мл., Крис Эванс · реж. братья Руссо", "d": "Финальная битва с Таносом снова на большом экране, на этот раз с дополнительными сценами. Повод пересмотреть кульминацию саги в зале.", "dt": "с 24 сентября", "age": "16+", "hi": "https://cdn.kino.kz/movies/Avengers_Endgame/p344x489.webp", "lo": "https://cdn.kino.kz/movies/Avengers_Endgame/p344x489.webp", "emb": "posters/06.jpg", "yt": "TcMBFSGVi1c"}, {"t": "Арахнид", "g": "ужасы • триллер", "c": "реж. Анхель Гомес Эрнандес", "d": "Жилец привозит из поездки новый ядовитый вид пауков, и они расползаются по всему дому. Здание закрывают на карантин вместе с жильцами, и управляющей Сирене приходится вести всех к выходу и бороться с главным своим страхом.", "dt": "с 8 октября", "age": "18+", "hi": "https://www.afisha.uz/uploads/media/2026/09/831c64a99e7185411a1d34530342a27e_lf.webp", "lo": "https://cdn.kino.kz/movies/Crawlers/p344x489.webp", "emb": "posters/07.jpg", "yt": "l-IYIVmuO2g"}, {"t": "Вышка 2", "g": "триллер", "c": "Харриет Слейтер, Арсема Томас · реж. братья Спириг", "d": "После гибели сестры героиня едет в Таиланд покорять гору Кхван. Камнепад оставляет двух подруг на узком выступе в километре над землёй. Продолжение хита 2022 года.", "dt": "в прокате", "age": "18+", "hi": "https://www.afisha.uz/uploads/media/2026/08/0fffd1a98a5c8d436141b2e1a62e12e6_lf.webp", "lo": "https://cdn.kino.kz/movies/Fall_2__Deadpoint/p344x489.webp", "emb": "posters/08.jpg", "yt": "sP111lRU-lk"}, {"t": "Натиск", "g": "экшн • фантастика", "c": "Адрия Архона, Дэн Стивенс · реж. Адам Вингард", "d": "Генетически изменённые суперсолдаты вырываются на свободу и нападают на дом бывшей военной Селесты. Чтобы спасти дочь, ей придётся вспомнить всё, чему её учили.", "dt": "с 1 октября", "age": "18+", "hi": "https://www.afisha.uz/uploads/media/2026/09/25722b85d66995aede74911ad6120ee3_lf.webp", "lo": "https://cdn.kino.kz/movies/Onslaught/p344x489.webp", "emb": "posters/09.jpg", "yt": "MS-VNYzEurk"}, {"t": "Восставший", "g": "боевик • исторический", "c": "Эндрю Гарфилд, Кэтрин Уотерстон · реж. Пол Гринграсс", "d": "Англия охвачена бунтом. Уот Тайлер никогда не хотел никого вести за собой, но оказывается во главе восставших и меняет ход истории. От режиссёра фильмов о Борне.", "dt": "с 17 сентября", "age": "18+", "hi": "https://www.afisha.uz/uploads/media/2026/08/e51dcdb848c1da6257aeea571f2ab6f8_lf.webp", "lo": "https://cdn.kino.kz/movies/The_Uprising/p344x489.webp", "emb": "posters/10.jpg", "yt": "vBEy3M7Fhcg"}, {"t": "Девятая планета", "g": "фантастика", "c": "Юра Борисов, Ирина Старшенбаум · реж. Николай Рыбников", "d": "Экспедиция на далёкую планету и выбор, от которого зависит больше, чем одна жизнь. По повести Игоря Ткаченко.", "dt": "с 1 октября", "age": "16+", "hi": "https://cdn.kino.kz/movies/Devyataya_planeta/p344x489.webp", "lo": "https://cdn.kino.kz/movies/Devyataya_planeta/p344x489.webp", "emb": "posters/11.jpg", "yt": "cyj3Ztmq7Cw"}, {"t": "Собачьи звёзды", "g": "драма • фантастика", "c": "Джейкоб Элорди, Джош Бролин, Маргарет Куэлли · реж. Ридли Скотт", "d": "Вирус уничтожил почти всё человечество. Пилот Хиг живёт с собакой и бывшим морпехом в ангаре на заброшенном аэродроме в Колорадо, пока сигнал по рации не зовёт его в путь. По роману Питера Хеллера.", "dt": "с 17 сентября", "age": "18+", "hi": "https://cdn.kino.kz/movies/The_Dog_Stars/p344x489.webp", "lo": "https://cdn.kino.kz/movies/The_Dog_Stars/p344x489.webp", "emb": "posters/12.jpg", "yt": "n5EgMdzV3zc"}, {"t": "Придурки", "g": "комедия • криминал", "c": "Дэйв Франко, О'Ши Джексон мл., Мейсон Темз · реж. Мэйкон Блэр", "d": "Трое неудачников ввязываются в криминальную авантюру, которая идёт не по плану с первой минуты. Лёгкая комедия на вечер от автора «В этом мире я больше не чувствую себя как дома».", "dt": "с 17 сентября", "age": "18+", "hi": "https://cdn.kino.kz/movies/Idiots/p344x489.webp", "lo": "https://cdn.kino.kz/movies/Idiots/p344x489.webp", "emb": "posters/13.jpg", "yt": "EWckb1yMLE0"}];
+/* постер: сначала большой, при ошибке — запасной, затем локальный */
+const src=k=>`src="${F[k].hi}" onerror="pf(this,${k})"`;
+function pf(im,k){const f=F[k],s=im.getAttribute('src');if(s===f.hi&&f.hi!==f.lo)im.src=f.lo;else if(s!==f.emb)im.src=f.emb}
+const app=document.getElementById('app'),modal=document.getElementById('modal'),mbox=document.getElementById('mbox');
+const LBL={yes:'Интересно',may:'Может быть',no:'Нет'};
+const KEY='kinoswipe.v1';
+let i=0,votes=[],busy=false,lastFocus=null;
+
+/* прогресс сохраняется между визитами (если хранилище доступно) */
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.votes)&&s.n===F.length){votes=s.votes.slice(0,F.length);i=votes.length}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({n:F.length,votes}))}catch(e){}}
+
+function deck(){
+  busy=false;
+  app.innerHTML=`<header><h1>Киносвайп</h1><div class="tools"><span class="count">${String(Math.min(i+1,F.length)).padStart(2,'0')} / ${F.length}</span><button class="undo" id="undo" aria-label="Вернуть предыдущий фильм" title="Назад (Backspace)" ${i?'':'disabled'}>↶</button></div></header>
+  <div class="prog" aria-hidden="true"><i style="width:${i/F.length*100}%"></i></div>
+  <div class="deck" id="deck"></div>
+  <div class="bar"><button class="b-no" data-v="no">✕ Нет</button><button class="b-may" data-v="may">Может быть</button><button class="b-yes" data-v="yes">♥ Интересно</button></div>
+  <div class="hint">Свайп → интересно · ← нет · ↑ может быть</div>`;
+  const d=document.getElementById('deck');
+  for(let k=Math.min(i+2,F.length-1);k>=i;k--){
+    const f=F[k],o=k-i,c=document.createElement('div');c.className='card';
+    c.style.transform=`translateY(${-o*14}px) scale(${1-o*.05})`;
+    if(o)c.setAttribute('aria-hidden','true');
+    c.innerHTML=`<div class="pst"><img class="bg" ${src(k)} alt="" draggable="false"><img class="fg" ${src(k)} alt="Постер: ${f.t}" draggable="false">
+    <span class="stamp s-yes">Интересно</span><span class="stamp s-no">Нет</span><span class="stamp s-may">Может быть</span>
+    <button class="trl" data-trl="${k}" ${o?'tabindex="-1"':''}>▶ Трейлер</button></div>
+    <div class="info"><span class="genre">${f.g} · ${f.age}</span><h2>${f.t}</h2><span class="meta">${f.c} · ${f.dt}</span><p>${f.d}</p></div>`;
+    d.appendChild(c); if(o===0) drag(c);
+  }
+  app.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>vote(b.dataset.v));
+  app.querySelectorAll('[data-trl]').forEach(b=>{b.onpointerdown=e=>e.stopPropagation();b.onclick=()=>trailer(F[+b.dataset.trl])});
+  document.getElementById('undo').onclick=undo;
+}
+function drag(c){
+  let sx,sy,dx=0,dy=0,on=false;const st=t=>c.querySelector('.s-'+t);
+  const info=c.querySelector('.info');
+  c.onpointerdown=e=>{if(busy||e.button>0)return;on=true;sx=e.clientX;sy=e.clientY;c.style.transition='none';c.setPointerCapture(e.pointerId)};
+  c.onpointermove=e=>{if(!on)return;dx=e.clientX-sx;dy=e.clientY-sy;
+    c.style.transform=`translate(${dx}px,${Math.min(dy,40)}px) rotate(${dx/18}deg)`;
+    st('yes').style.opacity=Math.max(0,dx/100);st('no').style.opacity=Math.max(0,-dx/100);st('may').style.opacity=Math.max(0,-dy/100-Math.abs(dx)/150)};
+  c.onpointerup=c.onpointercancel=e=>{if(!on)return;on=false;c.style.transition='';
+    if(e.type==='pointerup'&&dx>100)vote('yes');else if(e.type==='pointerup'&&dx<-100)vote('no');else if(e.type==='pointerup'&&dy<-100&&Math.abs(dx)<100)vote('may');
+    else{c.style.transform='';c.querySelectorAll('.stamp').forEach(s=>s.style.opacity=0)}dx=dy=0};
+  /* прокрутка длинного описания не должна сдвигать карточку */
+  info.style.touchAction='pan-y';info.onpointerdown=e=>{if(info.scrollHeight>info.clientHeight)e.stopPropagation()};
+}
+function vote(v){
+  if(busy||i>=F.length)return;busy=true;
+  const c=document.querySelector('.deck .card:last-child');
+  if(c){c.querySelector('.s-'+v).style.opacity=1;c.style.transform=v==='yes'?'translateX(130%) rotate(18deg)':v==='no'?'translateX(-130%) rotate(-18deg)':'translateY(-120%)';c.style.opacity=0}
+  votes[i]=v;i++;votes.length=i;save();
+  setTimeout(()=>i<F.length?deck():result(),260);
+}
+function undo(){if(busy||!i)return;i--;votes.length=i;save();deck()}
+function openModal(html){lastFocus=document.activeElement;mbox.innerHTML=html;modal.hidden=false;const cl=document.getElementById('cl');cl.onclick=closeModal;cl.focus()}
+function trailer(f){
+  openModal(`<iframe src="https://www.youtube-nocookie.com/embed/${f.yt}?autoplay=1&playsinline=1&rel=0" title="Трейлер: ${f.t}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+  <div class="mf"><div style="min-width:0"><b style="display:block">${f.t}</b><a href="https://www.youtube.com/watch?v=${f.yt}" target="_blank" rel="noopener" style="font-size:12px">Не грузится? Открыть на YouTube ↗</a></div><button class="x" id="cl">Закрыть</button></div>`);
+}
+function closeModal(){modal.hidden=true;mbox.innerHTML='';if(lastFocus&&document.contains(lastFocus))lastFocus.focus()}
+modal.onclick=e=>{if(e.target===modal)closeModal()};
+document.addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  if(!modal.hidden){if(e.key==='Escape')closeModal();return}
+  if(i>=F.length||!document.getElementById('deck'))return;
+  const v={ArrowRight:'yes',ArrowLeft:'no',ArrowUp:'may'}[e.key];
+  if(v){e.preventDefault();vote(v)}else if(e.key==='Backspace'){e.preventDefault();undo()}
+});
+
+function result(){
+  busy=false;
+  const by=v=>F.map((f,k)=>k).filter(k=>votes[k]===v);
+  const grp=(v,cls)=>{const a=by(v);return a.length?`<div class="grp ${cls}"><h3><span>${LBL[v]}</span><span>${a.length}</span></h3>${a.map(k=>`<div class="row"><img ${src(k)} alt=""><div><b>${F[k].t}</b><span>${F[k].g} · ${F[k].dt}</span></div></div>`).join('')}</div>`:''};
+  app.innerHTML=`<header><h1>Мой выбор</h1><span class="count">${by('yes').length} ♥</span></header>
+  <div class="res"><div id="shot">${grp('yes','g-yes')}${grp('may','g-may')}${grp('no','g-no')}<div class="brand">КИНОСВАЙП · ОКТЯБРЬ 2026</div></div>
+  <div class="acts"><button class="tg" id="share">Поделиться в Telegram</button><button class="again" id="back">↶ Изменить последний ответ</button><button class="again" id="again">Пройти заново</button></div></div>`;
+  document.getElementById('again').onclick=()=>{i=0;votes=[];save();deck()};
+  document.getElementById('back').onclick=undo;
+  document.getElementById('share').onclick=share;
+}
+async function share(){
+  const btn=document.getElementById('share');if(btn.disabled)return;btn.disabled=true;btn.textContent='Делаю скриншот…';
+  const list=v=>F.filter((f,k)=>votes[k]===v).map(f=>'• '+f.t).join('\n');
+  const text=`🎬 Мой кино-выбор\n\nИнтересно:\n${list('yes')||'—'}\n\nМожет быть:\n${list('may')||'—'}`;
+  const page=location.href.startsWith('http')?location.origin+location.pathname:'';
+  let blob=null,url='';
+  try{if(window.html2canvas){
+    /* в скриншот идут локальные постеры: чужие картинки без CORS испортили бы canvas */
+    const cv=await html2canvas(document.getElementById('shot'),{backgroundColor:'#050506',scale:2,onclone:doc=>doc.querySelectorAll('#shot .row img').forEach(im=>{const m=/pf\(this,(\d+)\)/.exec(im.getAttribute('onerror')||'');if(m)im.src=F[+m[1]].emb})});
+    url=cv.toDataURL('image/png');blob=await new Promise(r=>cv.toBlob(r,'image/png'))}}catch(e){}
+  btn.disabled=false;btn.textContent='Поделиться в Telegram';
+  if(blob&&navigator.canShare){const file=new File([blob],'kinoswipe.png',{type:'image/png'});
+    try{if(navigator.canShare({files:[file]})){await navigator.share({files:[file],text:page?text+'\n\n'+page:text});return}}catch(e){if(e.name==='AbortError')return}}
+  const tg='https://t.me/share/url?url='+encodeURIComponent(page)+'&text='+encodeURIComponent(text);
+  openModal(`<div style="padding:16px;display:flex;flex-direction:column;gap:12px" id="preview">${url?`<img src="${url}" alt="Скриншот результата"><a href="${url}" download="kinoswipe.png" style="font-size:13px;text-align:center">Скачать картинку</a><span style="font-size:13px;color:var(--mut)">На телефоне можно зажать картинку, чтобы сохранить её и прикрепить в Telegram</span>`:''}
+  <a class="tg" style="height:52px;border-radius:99px;display:flex;align-items:center;justify-content:center;text-decoration:none;color:#fff" href="${tg}" target="_blank" rel="noopener">Открыть Telegram со списком ↗</a><button class="x" id="cl">Закрыть</button></div>`);
+}
+load();
+i<F.length?deck():result();
+</script>
+</body>
+</html>
